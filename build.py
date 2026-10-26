@@ -82,7 +82,7 @@ def tar_archive(entries):
 
 
 def build_ipk(stage, output):
-    files = [(path.relative_to(stage).as_posix(), path.read_bytes(), path.stat().st_mode & 0o777) for path in sorted(stage.rglob('*')) if path.is_file()]
+    files = [(path.relative_to(stage).as_posix(), path.read_bytes(), 0o755 if path.relative_to(stage).as_posix() in EXECUTABLES else 0o644) for path in sorted(stage.rglob('*')) if path.is_file()]
     size = sum(len(content) for _, content, _ in files)
     control = f'''Package: {PACKAGE}
 Version: {VERSION}-{RELEASE}

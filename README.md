@@ -15,21 +15,40 @@
 ## 环境要求
 
 - OpenWrt / ImmortalWrt，使用 **fw4 / nftables** 和 LuCI
-- 安装 IPK 的系统须使用 **opkg** 包管理器
-- IPK 为纯脚本包，架构为 `all`，不支持 fw3 / iptables
+- 按系统包管理器选择安装包，不支持 fw3 / iptables
+- 安装包均为纯脚本包，IPK 架构为 `all`，APK 架构为 `noarch`
 
-当前 Release **只提供 IPK**。使用 APK 包管理器的固件不能直接安装 IPK。
+| 系统包管理器 | 下载格式 |
+| ------------ | -------- |
+| `opkg`       | `.ipk`   |
+| `apk`        | `.apk`   |
+
+以固件实际使用的包管理器为准，两个格式不能互换，修改文件后缀也不能转换格式。
 
 ## 安装
 
-从 [Releases](https://github.com/meesii/luci-app-webrtc-guard/releases/latest) 下载 IPK，上传到路由器后安装：
+从 [Releases](https://github.com/meesii/luci-app-webrtc-guard/releases/latest) 下载对应格式，上传到路由器后安装。
+
+### IPK / opkg
 
 ```sh
 opkg update
 opkg install /tmp/luci-app-webrtc-guard_1.2.3-1_all.ipk
 ```
 
-也可以使用 LuCI 的“系统 → 软件包 → 上传软件包”安装。
+也可以使用 LuCI 的“系统 → 软件包 → 上传软件包”安装 IPK。
+
+### APK / apk
+
+依赖已安装齐全时，可离线安装，避免安装过程刷新软件源：
+
+```sh
+apk --no-network --repositories-file /dev/null add --allow-untrusted /tmp/luci-app-webrtc-guard-1.2.3-r1.apk
+```
+
+手工构建的 APK 未使用发行版私钥签名，需核对 Release 中的 SHA256 后再安装；上述签名例外仅用于本次安装，不修改全局信任设置。缺少依赖时需先补齐依赖，使用 LuCI 上传安装也需要允许未签名包。
+
+### 开启防护
 
 进入 **服务 → WebRTC 防泄漏**，开启防护。首次安装默认关闭，通常保留默认设置即可；升级后若仍显示旧页面，按 `Ctrl + F5` 刷新。
 
@@ -54,7 +73,7 @@ opkg install /tmp/luci-app-webrtc-guard_1.2.3-1_all.ipk
 
 本插件用于降低泄漏风险，不承诺彻底禁用 WebRTC 或覆盖所有公网 IP 泄漏方式。
 
-## 构建 IPK
+## 构建安装包
 
 构建机器需要 Python 3.10 或更高版本，路由器不需要 Python。
 
@@ -62,7 +81,15 @@ opkg install /tmp/luci-app-webrtc-guard_1.2.3-1_all.ipk
 python3 build.py --output dist
 ```
 
-生成的 IPK 位于 `dist/luci-app-webrtc-guard_1.2.3-1_all.ipk`。也可以将本项目加入 OpenWrt SDK / Buildroot，按标准 LuCI 包构建。
+生成的 IPK 位于 `dist/luci-app-webrtc-guard_1.2.3-1_all.ipk`，构建脚本显式写入 Linux 文件权限，支持在 Windows 构建 IPK。
+
+构建 APK 需要带有 `mkpkg` 命令的 apk-tools 3：
+
+```sh
+python3 build.py --output dist --apk-tool /path/to/apk-tools-3/apk
+```
+
+也可以将本项目加入 OpenWrt SDK / Buildroot，按标准 LuCI 包构建。
 
 ## 许可证与致谢
 
